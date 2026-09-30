@@ -1,0 +1,15 @@
+<h1>New transaction for <%= @account.owner_name %></h1>
+
+<%= form_with model: [@account, @transaction] do |form| %>
+  <div>
+    <%= form.label :description %>
+    <%= form.text_field :description %>
+  </div>
+
+  <div>
+    <%= form.label :amount_cents %>
+    <%= form.number_field :amount_cents %>
+  </div>
+
+  <%= form.submit "Create transaction" %>
+<% end %>

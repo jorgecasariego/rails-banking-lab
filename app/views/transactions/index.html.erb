@@ -1,0 +1,10 @@
+<h1>Transactions for <%= @account.owner_name %></h1>
+
+<ul>
+  <% @transactions.each do |transaction| %>
+    <li>
+      <%= transaction.description %>:
+      <%= transaction.amount_cents %> cents
+    </li>
+  <% end %>
+</ul>
