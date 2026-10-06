@@ -15,4 +15,6 @@ Rails.application.routes.draw do
   resources :accounts do
     resources :transactions
   end
+
+  resources :transfers, only: [ :new, :create ]
 end

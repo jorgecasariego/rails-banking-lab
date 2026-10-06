@@ -1,0 +1,24 @@
+<h1>Transfer money</h1>
+
+<% if @error.present? %>
+  <p><%= @error %></p>
+<% end %>
+
+<%= form_with url: transfers_path, scope: :transfer do |form| %>
+  <div>
+    <%= form.label :sender_id, "From" %>
+    <%= form.collection_select :sender_id, @accounts, :id, :owner_name %>
+  </div>
+
+  <div>
+    <%= form.label :recipient_id, "To" %>
+    <%= form.collection_select :recipient_id, @accounts, :id, :owner_name %>
+  </div>
+
+  <div>
+    <%= form.label :amount_cents, "Amount (cents)" %>
+    <%= form.number_field :amount_cents %>
+  </div>
+
+  <%= form.submit "Transfer" %>
+<% end %>
