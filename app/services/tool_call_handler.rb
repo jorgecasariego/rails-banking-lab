@@ -6,7 +6,7 @@ class ToolCallHandler
 
   InvalidArguments = Class.new(StandardError)
 
-  TRANSFER_MONEY_KEYS = %w[recipient_id amount_cents].freeze
+  TRANSFER_MONEY_KEYS = %w[recipient_name amount_cents].freeze
 
   def initialize(current_account:)
     @current_account = current_account
@@ -32,19 +32,19 @@ class ToolCallHandler
   end
 
   # Arguments arrive as parsed JSON, so keys are strings. The sender is
-  # always current_account, so sender_id/account_id are unexpected keys.
+  # always current_account, and Rails resolves the recipient from a name,
+  # so recipient_id/sender_id/account_id are unexpected keys.
   def parse_transfer_money(arguments)
     raise InvalidArguments, "arguments must be an object" unless arguments.is_a?(Hash)
 
     unexpected = arguments.keys - TRANSFER_MONEY_KEYS
     raise InvalidArguments, "unexpected arguments: #{unexpected.join(", ")}" if unexpected.any?
 
-    recipient_id = strict_integer(arguments["recipient_id"], "recipient_id")
+    recipient_name = strict_name(arguments["recipient_name"])
     amount_cents = strict_integer(arguments["amount_cents"], "amount_cents")
     raise InvalidArguments, "amount_cents must be positive" unless amount_cents.positive?
 
-    recipient = Account.find_by(id: recipient_id)
-    raise InvalidArguments, "recipient not found" if recipient.nil?
+    recipient = find_recipient(recipient_name)
     raise InvalidArguments, "cannot transfer to the same account" if recipient == @current_account
 
     {
@@ -53,6 +53,24 @@ class ToolCallHandler
       recipient_name: recipient.owner_name,
       amount_cents: amount_cents
     }
+  end
+
+  # Exact match only: Rails, not the model, decides which account a name
+  # means, and it never guesses between accounts that share a name.
+  def find_recipient(name)
+    matches = Account.where(owner_name: name).limit(2).to_a
+    raise InvalidArguments, "recipient not found" if matches.empty?
+    raise InvalidArguments, "ambiguous recipient: more than one account is named #{name}" if matches.size > 1
+
+    matches.first
+  end
+
+  def strict_name(value)
+    unless value.is_a?(String) && value.strip.present?
+      raise InvalidArguments, "recipient_name must be a non-blank string"
+    end
+
+    value.strip
   end
 
   # Accepts a JSON integer or a string of ASCII digits. Unlike to_i, it
