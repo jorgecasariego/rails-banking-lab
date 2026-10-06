@@ -1,9 +1,16 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
+# Sample accounts used in the README examples and script/adversarial_experiments.rb.
 #
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Safe to run repeatedly: accounts are looked up by owner_name, and an
+# existing account is left untouched. The balances are only used when an
+# account is created for the first time. No transactions are created.
+return if Rails.env.production?
+
+{
+  "Jorge" => 6_000,
+  "Alice" => 9_000,
+  "Bob" => 5_000
+}.each do |owner_name, balance_cents|
+  Account.find_or_create_by!(owner_name: owner_name) do |account|
+    account.balance_cents = balance_cents
+  end
+end
